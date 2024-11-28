@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Upload Documents</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <div class="logo-header">
+                <img src="/assets/logo.jpg" alt="PCP Logo" class="logo">
+                <div class="title-group">
+                    <h1>पीसीपीसी सायबर क्राईम रिपोर्टिंग पोर्टल</h1>
+                    <h2>PCPC Cyber Crime Reporting Portal</h2>
+                </div>
+                <img src="/assets/home.jpg" alt="home" class="home">
+            </div>
+        </header>
+
+        <h2><i class="fas fa-upload"></i> Document Upload</h2>
+        <form id="upload-form" class="upload-form">
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="complaint-number"><i class="fas fa-file-alt"></i> Complaint Number</label>
+                    <input type="text" id="complaint-number" placeholder="Enter Complaint Number">
+                </div>
+
+                <div class="form-group">
+                    <label for="document-type"><i class="fas fa-file-archive"></i> Document Type</label>
+                    <select id="document-type">
+                        <option value="">Select Document Type</option>
+                        <option value="fir">FIR Copy</option>
+                        <option value="statement">Victim Statement</option>
+                        <option value="evidence">Evidence</option>
+                        <option value="other">Other</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group file-upload">
+                    <label for="file-upload"><i class="fas fa-cloud-upload-alt"></i> Upload Document</label>
+                    <input type="file" id="file-upload" accept=".pdf,.xls,.xlsx,.csv,.doc,.docx,.jpg,.jpeg,.png">
+                    <small>Accepted formats: PDF, Excel, DOC, DOCX, JPG, PNG (Max 10MB)</small>
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="document-description"><i class="fas fa-comment-dots"></i> Document Description</label>
+                    <textarea id="document-description" placeholder="Enter a brief description of the document"></textarea>
+                </div>
+            </div>
+
+            <div id="file-preview" class="file-preview">
+                <!-- File preview will be dynamically populated -->
+            </div>
+
+            <div>
+                <button type="submit" class="submit-btn" id="upload-btn">
+                    <i class="fas fa-upload"></i> Upload
+                </button>
+                <button type="reset" class="submit-btn" id="reset-btn">
+                    <i class="fas fa-redo"></i> Reset
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <script src="/static/js/script.js"></script>
+</body>
+</html>

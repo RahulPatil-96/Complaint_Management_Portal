@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <div class="logo-header">
+                <img src="/assets/logo.jpg" alt="PCP Logo" class="logo">
+                <div class="title-group">
+                    <h1>पीसीपीसी सायबर क्राईम रिपोर्टिंग पोर्टल</h1>
+                    <h2>PCPC Cyber Crime Reporting Portal</h2>
+                </div>
+                <img src="/assets/home.jpg" alt="home" class="home">
+            </div>
+        </header>
+
+        <h2><i class="fas fa-edit"></i> Edit Complaint</h2>
+        <form id="edit-complaint-form" class="edit-form">
+            <div class="form-row">
+                <label for="complaint-search"><i class="fas fa-search"></i> Search Complaint</label>
+                <input type="text" id="complaint-search" placeholder="Enter Complaint Number or Acknowledgment Number">
+            </div>
+
+            <div class="form-row">
+                <button type="button" class="submit-btn" id="search-complaint-btn"><i class="fas fa-search"></i> Search</button>
+            </div>
+
+            <div id="complaint-details" style="display:none;">
+                <div class="form-row">
+                    <label for="victim-name-edit"><i class="fas fa-user"></i> Victim Name</label>
+                    <input type="text" id="victim-name-edit">
+                </div>
+
+                <div class="form-row">
+                    <label for="complaint-type-edit"><i class="fas fa-clipboard-list"></i> Complaint Type</label>
+                    <select id="complaint-type-edit">
+                        <option value="financial">Financial Fraud</option>
+                        <option value="social-media">Social Media Fraud</option>
+                        <option value="other">Other</option>
+                    </select>
+                </div>
+
+                <div class="form-row">
+                    <label for="complaint-description-edit"><i class="fas fa-file-alt"></i> Description</label>
+                    <textarea id="complaint-description-edit"></textarea>
+                </div>
+
+                <div class="form-row action-buttons">
+                    <button type="submit" class="submit-btn" id="update-complaint-btn"><i class="fas fa-save"></i> Update Complaint</button>
+                    <button type="button" class="submit-btn" id="cancel-edit-btn"><i class="fas fa-times-circle"></i> Cancel</button>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <script src="/static/js/script.js"></script>
+</body>
+</html>

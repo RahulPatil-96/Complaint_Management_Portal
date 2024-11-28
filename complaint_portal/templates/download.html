@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Download</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+</head>
+
+<body>
+    <div class="container">
+        <header class="header">
+            <div class="logo-header">
+                <img src="/assets/logo.jpg" alt="PCP Logo" class="logo">
+                <div class="title-group">
+                    <h1>पीसीपीसी सायबर क्राईम रिपोर्टिंग पोर्टल</h1>
+                    <h2>PCPC Cyber Crime Reporting Portal</h2>
+                </div>
+                <img src="/assets/home.jpg" alt="home" class="home">
+            </div>
+        </header>
+
+        <h2><i class="fas fa-download"></i> Download By</h2>
+        <form id="downloadForm" class="form-container">
+            <!-- Start Date, End Date, and Lost Amount in one row -->
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="start-date"><i class="fas fa-calendar-alt"></i> Start Date</label>
+                    <input type="date" id="start-date">
+                </div>
+                <div class="form-group">
+                    <label for="end-date"><i class="fas fa-calendar-alt"></i> End Date</label>
+                    <input type="date" id="end-date">
+                </div>
+                <div class="form-group">
+                    <label for="lost-amount"><i class="fas fa-dollar-sign"></i> Lost Amount</label>
+                    <input type="number" id="lost-amount" placeholder="Enter Lost Amount">
+                </div>
+            </div>
+
+            <!-- Lien/Hold Amount, Type of Fraud, and BPC Act in one row -->
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="line-amt"><i class="fas fa-dollar-sign"></i> Lien/Hold Amt</label>
+                    <input type="number" id="line-amt" placeholder="Enter Line/Hold Amount">
+                </div>
+                <div class="form-group">
+                    <label for="type-of-fraud"><i class="fas fa-fingerprint"></i> Type of Fraud</label>
+                    <select id="type-of-fraud">
+                        <option value="">Select Type of Fraud</option>
+                        <option value="financial">Financial Fraud</option>
+                        <option value="social-media">Social Media Fraud</option>
+                        <option value="other">Other</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="bpc-act"><i class="fas fa-gavel"></i> BPC Act</label>
+                    <select id="bpc-act">
+                        <option value="">Select BPC Act</option>
+                        <option value="bpc1">BPC Act 1</option>
+                        <option value="bpc2">BPC Act 2</option>
+                        <option value="other">Other</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- IT Act, Police Station, and Investigation Officer in one row -->
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="it-act"><i class="fas fa-gavel"></i> IT Act Sec</label>
+                    <select id="it-act">
+                        <option value="">Select IT Act</option>
+                        <option value="it1">IT Act 1</option>
+                        <option value="it2">IT Act 2</option>
+                        <option value="other">Other</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="police-station"><i class="fas fa-map-marker-alt"></i> Police Station</label>
+                    <select id="police-station">
+                        <option value="">Select Police Station</option>
+                        <option value="P1">Pimpri Police Station</option>
+                        <option value="P2">Chinchwad Police Station</option>
+                        <option value="P3">Nigadi Police Station</option>
+                        <option value="P4">Bhosari Police Station</option>
+                        <option value="P5">Bhosari MIDC Police Station</option>
+                        <option value="P6">Chakan Police Station</option>
+                        <option value="P7">Alandi Police Station</option>
+                        <option value="P8">Dighi Police Station</option>
+                        <option value="P9">Sangvi Police Station</option>
+                        <option value="P10">Wakad Police Station</option>
+                        <option value="P11">Hinjwadi Police Station</option>
+                        <option value="P12">Dehuroad Police Station</option>
+                        <option value="P13">Chikhali Police Station</option>
+                        <option value="P14">Talegoan Dabhade Police Station</option>
+                        <option value="P15">Talegoan MIDC Police Station</option>
+                        <option value="other">Other</option>
+                    </select>
+                    <label for="other-police-station" id="other-police-label" style="display:none;"><i class="fas fa-map-marker-alt"></i> Other Police Station</label>
+                    <input type="text" id="other-police-station" placeholder="Enter Police Station Name" style="display:none;">
+                </div>
+
+                <div class="form-group">
+                    <label for="investigation-officer"><i class="fas fa-user-tie"></i> Investigation Officer</label>
+                    <select id="investigation-officer">
+                        <option value="">Select Investigation Officer</option>
+                        <option value="officer1">API Swami</option>
+                        <option value="officer2">API Munde</option>
+                        <option value="officer3">PSI Poman</option>
+                        <option value="officer4">PSI V. Patil</option>
+                        <option value="officer5">WPSI Vidya Patil</option>
+                        <option value="officer6">PSI Katkade</option>
+                        <option value="other">Other</option>
+                    </select>
+                    <label for="other-officer" id="other-officer-label" style="display:none;"><i class="fas fa-user-tie"></i> Other Officer</label>
+                    <input type="text" id="other-officer" placeholder="Enter Officer Name" style="display:none;">
+                </div>
+            </div>
+
+            <!-- Status, Sort By and Apply Filter in one row -->
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="status"><i class="fas fa-info-circle"></i> Status</label>
+                    <select id="status">
+                        <option value="">Select Status</option>
+                        <option value="open">Open</option>
+                        <option value="closed">Closed</option>
+                        <option value="pending">Pending</option>
+                    </select>
+                </div>
+
+                <div class="form-group sort-filter-group">
+                    <label for="sort-by"><i class="fas fa-sort"></i> Sort By</label>
+                    <select id="sort-by">
+                        <option value="">Select Sort By</option>
+                        <option value="newest">Newest First</option>
+                        <option value="oldest">Oldest First</option>
+                    </select>
+                </div>
+
+                <div class="form-group sort-filter-group">
+                    <button type="button" class="action-btn" id="apply-filter">
+                        <i class="fas fa-filter"></i> Apply Filter
+                    </button>
+                </div>
+            </div>
+
+            <!-- Download Button with Dropdown Styled as Submit Button -->
+            <div class="form-row">
+                <div class="dropdown">
+                    <button class="submit-btn dropdown-toggle" type="button">
+                        <i class="fas fa-download"></i> Download Report
+                    </button>
+                    <div class="dropdown-menu">
+                        <a href="#" class="dropdown-item" id="download-pdf"><i class="fas fa-file-pdf"></i> Download PDF</a>
+                        <a href="#" class="dropdown-item" id="download-excel"><i class="fas fa-file-excel"></i> Download Excel</a>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <script src="/static/js/script.js"></script>
+</body>
+
+</html>
