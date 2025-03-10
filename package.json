@@ -1,0 +1,50 @@
+{
+  "name": "complaint-portal",
+  "version": "1.0.0",
+  "description": "My Electron Application",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron . --enable-logging --disable-gpu",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "electron-builder"
+  },
+  "dependencies": {
+    "bcrypt": "^5.1.1",
+    "docx": "^9.1.0",
+    "exceljs": "^4.4.0",
+    "patch-package": "^8.0.0",
+    "pdfkit": "^0.16.0",
+    "postinstall-postinstall": "^2.1.0",
+    "production": "^0.0.2",
+    "sqlite3": "^5.1.7"
+  },
+  "devDependencies": {
+    "electron": "^27.3.11",
+    "electron-builder": "^25.1.8"
+  },
+  "keywords": [
+    "complaint",
+    "management"
+  ],
+  "author": "V&R",
+  "license": "ISC",
+  "build": {
+    "appId": "com.yourcompany.cyber-complaint-portal",
+    "productName": "Complaint Portal",
+    "win": {
+      "target": "nsis",
+      "icon": "assets/app-icon.ico"
+    },
+    "directories": {
+      "output": "dist"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Complaint Portal",
+      "deleteAppDataOnUninstall": true
+    }
+  }
+}
