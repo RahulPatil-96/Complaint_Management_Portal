@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Search</title>
+
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; 
+    script-src 'self' 'unsafe-inline' 'nonce-xyz123'; 
+    style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com; 
+    img-src 'self' data:; 
+    font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com;">
+
+    <link rel="stylesheet" href="../static/css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <div class="logo-header">
+                <img src="../assets/logo.jpg" alt="PCP Logo" class="logo">
+                <div class="title-group">
+                    <h1>पीसीपीसी क्राईम रिपोर्टिंग पोर्टल</h1>
+                    <h2>PCPC Crime Reporting Portal</h2>
+                </div>
+                <img src="../assets/home.jpg" alt="home" class="home" >
+            </div>
+        </header>
+
+        <h2><i class="fas fa-search"></i> Search Cases</h2>
+        <form id="searchForm" class="form-container">
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="date-from"><i class="fas fa-calendar-alt"></i> Start Date</label>
+                    <input type="date" id="date-from">
+                </div>
+                <div class="form-group">
+                    <label for="date-to"><i class="fas fa-calendar-alt"></i> End Date</label>
+                    <input type="date" id="date-to">
+                </div>
+
+                <div class="form-group">
+                    <label for="lost-amount"><i class="fas fa-rupee-sign"></i> Lost Amount</label>
+                    <input type="number" id="lost-amount" placeholder="Enter Lost Amount">
+                </div>
+
+                <div class="form-group">
+                    <label for="line-amt"><i class="fas fa-rupee-sign"></i> Lien/Hold Amt</label>
+                    <input type="number" id="line-amt" placeholder="Enter Line/Hold Amount">
+                </div>
+            </div>
+
+            <!-- Group Category of Complaint and Sub Category in one row -->
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="cat-of-complaint"><i class="fas fa-clipboard-list"></i> Category </label>
+                    <select id="cat-of-complaint" >
+                        <option value="">Select Category</option>
+                        <option value="Financial Fraud">Financial Fraud</option>
+                        <option value="Social Media Related">Social Media Related</option>
+                        <option value="other">Other</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="sub-cat-of-complaint"><i class="fas fa-clipboard-list"></i> Sub Category </label>
+                    <select id="sub-cat-of-complaint"></select>
+                    <input type="text" id="custom-sub-cat" style="display:none;" placeholder="Enter Sub Category of Complaint">
+                </div>
+
+                <div class="form-group">
+                    <label for="police-station"><i class="fas fa-map-marker-alt"></i> Police Station</label>
+                    <select id="police-station">
+                        <option value="">Select Police Station</option>
+                        <option value="Pimpri PS">Pimpri Police Station</option>
+                        <option value="Chinchwad PS">Chinchwad Police Station</option>
+                        <option value="Nigdi PS">Nigdi Police Station</option>
+                        <option value="Bhosari PS">Bhosari Police Station</option>
+                        <option value="Bhosari MIDC PS">Bhosari MIDC Police Station</option>
+                        <option value="Chakan PS">Chakan Police Station</option>
+                        <option value="Alandi PS">Alandi Police Station</option>
+                        <option value="Dighi PS">Dighi Police Station</option>
+                        <option value="Sangvi PS">Sangvi Police Station</option>
+                        <option value="Wakad PS">Wakad Police Station</option>
+                        <option value="Hinjewadi PS">Hinjewadi Police Station</option>
+                        <option value="Dehuroad PS">Dehuroad Police Station</option>
+                        <option value="Chikhali PS">Chikhali Police Station</option>
+                        <option value="Talegoan Dabhade PS">Talegoan Dabhade Police Station</option>
+                        <option value="Talegoan MIDC PS">Talegoan MIDC Police Station</option>
+                        <option value="Sant Tukaram Nagar PS">Sant Tukaram Nagar Police Station</option>
+                        <option value="Dapodi PS">Dapodi Police Station</option>
+                        <option value="Kalewadi PS">Kalewadi Police Station</option>
+                        <option value="Bavdhan PS">Bavdhan Police Station</option>
+                        <option value="other">Other</option>
+                    </select>
+                    <input type="text" id="other-police-station" placeholder="Enter Police Station Name" style="display:none;">
+                </div>
+
+                <div class="form-group">
+                    <label for="investigation-officer"><i class="fas fa-user-tie"></i> Investigation Officer</label>
+                    <select id="investigation-officer" >
+                        <option value="">Select Investigation Officer</option>
+                        <option value="API Swami">API Swami</option>
+                        <option value="API Munde">API Munde</option>
+                        <option value="PSI Poman">PSI Poman</option>
+                        <option value="PSI V. Patil">PSI V. Patil</option>
+                        <option value="WPSI Vidya Patil">WPSI Vidya Patil</option>
+                        <option value="PSI Katkade">PSI Katkade</option>
+                        <option value="other">Other</option>
+                    </select>
+                    <input type="text" id="other-officer" placeholder="Enter Officer Name" style="display:none;">
+                </div>
+            </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="it-act"><i class="fas fa-gavel"></i> IT Act Sec</label>
+                        <input type="text" id="it-act" placeholder="Enter IT Act Section" >
+                    </div>
+    
+                    <div class="form-group">
+                        <label for="bns"><i class="fas fa-gavel"></i> BNS Sec</label>
+                        <input type="text" id="bns" placeholder="Enter BNS Section" >
+                    </div>
+
+                <div class="form-group">
+                    <label for="complaint-number"><i class="fas fa-file-alt"></i> Complaint No.</label>
+                    <input type="number" id="complaint-number" placeholder="Enter Complaint Number">
+                </div>
+                <div class="form-group">
+                    <label for="victim-name"><i class="fas fa-user"></i> Victim Name</label>
+                    <input type="text" id="victim-name" placeholder="Enter Victim Name">
+                </div>
+            </div>
+
+            <div class="form-row">
+                    <div class="form-group">
+                        <label for="victim-mobile-number"><i class="fas fa-mobile-alt"></i> Mobile Number</label>
+                        <div id="victim-mobile-numbers">
+                            <input type="number" class="mobile-input" placeholder="Enter Mobile Number">
+                        </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="ack-no"><i class="fas fa-file-alt"></i> Acknowledgment No.</label>
+                    <input type="number" id="ack-no" placeholder="Enter Acknowledgment No.">
+                </div>
+
+                <div class="form-group">
+                    <label for="action"><i class="fas fa-exclamation-triangle"></i> Action Taken</label>
+                    <select id="action">
+                        <option value="">Select Action</option>
+                        <option value="Forward To PS">Forward To PS</option>
+                        <option value="Transferred To Other">Transferred To Other</option>
+                        <option value="closed">Closed</option>
+                    </select>
+                </div>
+
+                <div class="form-group sort-filter-group">
+                    <label for="sort-by"><i class="fas fa-sort"></i> Sort By</label>
+                    <select id="sort-by">
+                        <option value="">Select Sort By</option>
+                        <option value="newest">Newest First</option>
+                        <option value="oldest">Oldest First</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div>
+                    <button type="submit" class="submit-btn" id="search-btn">
+                        <i class="fas fa-search"></i> Search
+                    </button>
+                    <button type="reset" class="submit-btn" id="reset-btn">
+                        <i class="fas fa-redo"></i> Reset
+                    </button>
+                </div>
+
+                <div class="download-section">
+                    <button type="button" id="download-btn" class="submit-btn">
+                        <i class="fas fa-download"></i> Download Results
+                    </button>
+                    <div id="download-options" class="download-options" style="display: none;">
+                        <div id="download-format-wrapper" class="download-format-wrapper">
+                            <button type="button" class="download-option" data-value="excel">
+                                <i class="fas fa-file-excel"></i> Excel
+                            </button>
+                            <button type="button" class="download-option" data-value="pdf">
+                                <i class="fas fa-file-pdf"></i> PDF
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="merge-section" style="display: none;">
+                    <button id="merge-btn" class="submit-btn">
+                        <i class="fas fa-compress"></i> Merge Selected
+                    </button>
+                </div>
+
+                <div class="history-controls">
+                    <button id="undo-btn" title="Undo (Ctrl+Z)"><i class="fas fa-undo"></i></button>
+                </div>
+            </div>
+
+            
+        </form>
+
+        <div class="table-container">
+            <table class="results-table">
+                <div id="search-results" class="search-results">
+                    <!-- Search results will be dynamically populated here -->
+                </div>
+            </table>
+        </div>
+    </div>
+
+    <script src="../render.js"></script>
+</body>
+</html>
