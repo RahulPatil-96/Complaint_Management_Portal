@@ -25,26 +25,35 @@ document.addEventListener('DOMContentLoaded', () => {
     
         const stringValue = String(value).trim();
     
-        // Check for empty patterns like ["\"] or multiple instances
+        // Clean special characters first (brackets, quotes, slashes)
+        let cleanedValue = stringValue.replace(/[\[\]"\/\\]/g, '');
+    
+        // Check for empty patterns after cleaning
         if (
-            stringValue === '?' || 
-            stringValue === '|' || 
-            /^(\[\"\"\])+$/.test(stringValue) // Regex to match ["\"] repeated
+            cleanedValue === '?' || 
+            cleanedValue === '|' || 
+            /^(\s*)+$/.test(cleanedValue) ||  // Empty after cleaning
+            /^(\\?)+$/.test(cleanedValue)     // Backslash patterns
         ) {
             return '';
         }
     
-        const mobileNumberPattern = /\["(\d+)"\]/g; 
-        const matches = stringValue.match(mobileNumberPattern);
+        // Mobile number pattern detection (works with cleaned values)
+        const mobileNumberPattern = /(\d{10,})/g;  // Simplified pattern
+        const matches = cleanedValue.match(mobileNumberPattern);
     
         if (matches) {
-            const extractedNumbers = matches.map(match => 
-                match.replace(/\["|"\]/g, '')
-            );
-            return extractedNumbers.join('<br>'); // Line breaks for numbers
+            return matches.join('<br>');
         }
     
-        return stringValue;
+        // Preserve existing line breaks from original value
+        const withLineBreaks = stringValue
+            .replace(/<br\s*\/?>/gi, '__BR__')
+            .replace(/\n/g, '__BR__')
+            .replace(/__BR__/g, '<br>');
+    
+        // Final cleaning of any remaining special characters
+        return withLineBreaks.replace(/[\[\]"\/\\]/g, '');
     };
 
     const createFileButton = (className, text, filePath, onClick) => {
@@ -432,6 +441,7 @@ document.addEventListener('DOMContentLoaded', () => {
     
         // Add event listener to Action Taken field
         actionSelect.addEventListener('change', toggleFieldsBasedOnAction);
+        
     };    
 
     const setupSearchPage = () => {
@@ -448,26 +458,16 @@ document.addEventListener('DOMContentLoaded', () => {
         class HistoryManager {
             constructor() {
                 this.undoStack = [];
-                this.redoStack = [];
             }
      
             push(action) {
                 this.undoStack.push(action);
-                this.redoStack = [];
             }
      
             async undo() {
                 if (this.undoStack.length === 0) return;
                 const action = this.undoStack.pop();
                 await action.undo();
-                this.redoStack.push(action);
-            }
-     
-            async redo() {
-                if (this.redoStack.length === 0) return;
-                const action = this.redoStack.pop();
-                await action.redo();
-                this.undoStack.push(action);
             }
         }
      
@@ -596,123 +596,237 @@ document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('other-officer').style.display = 'none';
         };
      
+        function addLoaderStyles() {
+            if (!document.getElementById('loader-styles')) {
+                const style = document.createElement('style');
+                style.id = 'loader-styles';
+                style.textContent = `
+                    .loader {
+                        --background: linear-gradient(135deg, #23C4F8, #275EFE);
+                        --shadow: rgba(39, 94, 254, 0.28);
+                        --text: #6C7486;
+                        --page: rgba(255, 255, 255, 0.36);
+                        --page-fold: rgba(255, 255, 255, 0.52);
+                        --duration: 3s;
+                        width: 200px;
+                        height: 140px;
+                        position: relative;
+                        margin: 20px auto;
+                    }
+        
+                    .loader:before, .loader:after {
+                        --r: -6deg;
+                        content: "";
+                        position: absolute;
+                        bottom: 8px;
+                        width: 120px;
+                        top: 80%;
+                        box-shadow: 0 16px 12px var(--shadow);
+                        transform: rotate(var(--r));
+                    }
+        
+                    .loader:before { left: 4px; }
+                    .loader:after { --r: 6deg; right: 4px; }
+        
+                    .loader div {
+                        width: 100%;
+                        height: 100%;
+                        border-radius: 13px;
+                        position: relative;
+                        z-index: 1;
+                        perspective: 600px;
+                        box-shadow: 0 4px 6px var(--shadow);
+                        background-image: var(--background);
+                    }
+        
+                    .loader div ul {
+                        margin: 0;
+                        padding: 0;
+                        list-style: none;
+                        position: relative;
+                    }
+        
+                    .loader div ul li {
+                        --r: 180deg;
+                        --o: 0;
+                        --c: var(--page);
+                        position: absolute;
+                        top: 10px;
+                        left: 10px;
+                        transform-origin: 100% 50%;
+                        color: var(--c);
+                        opacity: var(--o);
+                        transform: rotateY(var(--r));
+                        animation: var(--duration) ease infinite;
+                    }
+        
+                    .loader div ul li:nth-child(2) { --c: var(--page-fold); animation-name: page-2; }
+                    .loader div ul li:nth-child(3) { --c: var(--page-fold); animation-name: page-3; }
+                    .loader div ul li:nth-child(4) { --c: var(--page-fold); animation-name: page-4; }
+                    .loader div ul li:nth-child(5) { --c: var(--page-fold); animation-name: page-5; }
+                    .loader div ul li svg { width: 90px; height: 120px; display: block; }
+                    .loader div ul li:first-child { --r: 0deg; --o: 1; }
+                    .loader div ul li:last-child { --o: 1; }
+                    .loader span { display: block; left: 0; right: 0; top: 100%; margin-top: 20px; text-align: center; color: var(--text); }
+        
+                    @keyframes page-2 {
+                        0% { transform: rotateY(180deg); opacity: 0; }
+                        20% { opacity: 1; }
+                        35%, 100% { opacity: 0; }
+                        50%, 100% { transform: rotateY(0deg); }
+                    }
+                    @keyframes page-3 {
+                        15% { transform: rotateY(180deg); opacity: 0; }
+                        35% { opacity: 1; }
+                        50%, 100% { opacity: 0; }
+                        65%, 100% { transform: rotateY(0deg); }
+                    }
+                    @keyframes page-4 {
+                        30% { transform: rotateY(180deg); opacity: 0; }
+                        50% { opacity: 1; }
+                        65%, 100% { opacity: 0; }
+                        80%, 100% { transform: rotateY(0deg); }
+                    }
+                    @keyframes page-5 {
+                        45% { transform: rotateY(180deg); opacity: 0; }
+                        65% { opacity: 1; }
+                        80%, 100% { opacity: 0; }
+                        95%, 100% { transform: rotateY(0deg); }
+                    }
+                `;
+                document.head.appendChild(style);
+            }
+        }
+        
         const performSearch = async (formData, storeHistory = true) => {
             try {
+                addLoaderStyles();
+        
                 if (storeHistory) {
-                    const previousFilters = { ...currentFilters }; // Capture current filters before updating
+                    const previousFilters = { ...currentFilters };
                     const action = {
                         undo: async () => await performSearch(previousFilters, false),
-                        redo: async () => await performSearch(formData, false)
                     };
                     historyManager.push(action);
                 }
-     
-                searchResults.innerHTML = 'Loading results...';
+        
+                // Show loader animation
+                searchResults.innerHTML = `
+                     <div class="loader">
+                    <div>
+                        <ul>
+                            ${[...Array(5)].map(() => `
+                                <li>
+                                    <svg fill="currentColor" viewBox="0 0 90 120">
+                                        <path d="M90,0 L90,120 L11,120 C4.92,120 0,115.08 0,109 L0,11 C0,4.92 4.92,0 11,0 H90 Z M71.5,81 H18.5 C17.12,81 16,82.12 16,83.5 C16,84.83 17.03,85.91 18.34,85.99 H71.5 C72.88,86 74,84.88 74,83.5 C74,82.17 72.97,81.09 71.66,81.01 Z M71.5,57 H18.5 C17.12,57 16,58.12 16,59.5 C16,60.83 17.03,61.91 18.34,61.99 H71.5 C72.88,62 74,60.88 74,59.5 C74,58.12 72.88,57 71.5,57 Z M71.5,33 H18.5 C17.12,33 16,34.12 16,35.5 C16,36.83 17.03,37.91 18.34,37.99 H71.5 C72.88,38 74,36.88 74,35.5 C74,34.12 72.88,33 71.5,33 Z"/>
+                                    </svg>
+                                </li>
+                            `).join('')}
+                        </ul>
+                    </div>
+                    <span>Loading</span>
+                </div>
+            `;
+        
+                await new Promise(resolve => setTimeout(resolve, 1000));
+        
                 currentFilters = formData;
                 currentResults = await window.electronAPI.fetchComplaints(formData);
                 displaySearchResults(currentResults);
-     
+        
             } catch (error) {
                 console.error('Search error:', error);
-                searchResults.innerHTML = `<p>Error: ${error.message}</p>`;
+                searchResults.innerHTML = `<p class="error">Error: ${error.message}</p>`;
             }
         };
-     
-        const handleDelete = async (caseId, resultRow) => {
-            try {
-                const deleteResult = await window.electronAPI.deleteCase(caseId);
-                if (!deleteResult.success) throw new Error(deleteResult.message);
-     
-                resultRow.remove();
-                currentResults = currentResults.filter(r => r.id !== caseId);
-     
-                // Capture currentFilters at the time of deletion
-                const filtersAtDeletion = { ...currentFilters };
-     
-                historyManager.push({
-                    undo: async () => {
-                        await window.electronAPI.restoreCase(caseId);
-                        await performSearch(filtersAtDeletion, false);
-                    },
-                    redo: async () => {
-                        await window.electronAPI.deleteCase(caseId);
-                        await performSearch(filtersAtDeletion, false);
-                    }
-                });
-     
-            } catch (error) {
-                Utils.showNotification(`Delete failed: ${error.message}`, 'error');
-            }
-        };
-     
+        
         const handleMerge = async (complaintIds) => {
             try {
                 const mergeResult = await window.electronAPI.mergeComplaints(complaintIds);
-                if (!mergeResult.success) throw new Error(mergeResult.message);
-     
-                const originalIds = [...complaintIds];
-                const mergedId = mergeResult.mergedId;
-     
-                historyManager.push({
-                    undo: async () => {
-                        await window.electronAPI.unmergeComplaint(mergedId);
-                        await performSearch(currentFilters);
-                    },
-                    redo: async () => {
-                        await window.electronAPI.mergeComplaints(originalIds);
-                        await performSearch(currentFilters);
-                    }
-                });
-     
+                if (!mergeResult.success) {
+                    Utils.showNotification(mergeResult.message, 'error');
+                    return;
+                }
+        
+                const mergedCaseId = mergeResult.mergedCaseId;
+                console.log("merged case id",mergedCaseId);
+        
+                Utils.showNotification('Complaints merged successfully!', 'success');
                 selectedComplaints.clear();
                 toggleMergeButton();
-                await performSearch(currentFilters);
-     
+                await performSearch(currentFilters); // Refresh UI
+        
+                // Push to historyManager for Undo
+                historyManager.push({
+                    async undo() {
+                        console.log("Undo triggered for merged case:", mergedCaseId);
+                        const response = await window.electronAPI.unmergeComplaints(mergedCaseId);
+                        if (response.success) {
+                            Utils.showNotification('Complaints unmerged successfully', 'success');
+                        } else {
+                            Utils.showNotification(response.message, 'error');
+                        }
+                        await performSearch(currentFilters);
+                    },
+                });
+        
             } catch (error) {
-                Utils.showNotification(`Merge failed: ${error.message}`, 'error');
+                console.error('Error merging complaints:', error);
+                Utils.showNotification('Failed to merge complaints.', 'error');
             }
         };
+
+        const getSubcategories = (category) => {
+            const subcategories = {
+                'Financial Fraud': ['Online Task', 'Share/Trading', 'Fedex Parcel', 'MNGL Gas', 'Loan App', 'Video Call On Social Media', 'Credit/Debit Card Related', 'Matrimonial Related', 'Digital Arrest', 'Insurance', 'Apk download', 'OTP shared', 'Man in the middle', 'OLX purchase/sell', 'Other'],
+                'Social Media Related': ['Social Media Account Hack', 'Posting Abusive Content', 'Other'],
+            };
+            return subcategories[category] || [];
+        };
+        
      
         const displaySearchResults = (results) => {
             console.log("Clearing previous results...");
             searchResults.innerHTML = '';
-     
+        
             if (results.length === 0) {
                 searchResults.innerHTML = '<p>No matching cases found.</p>';
                 return;
             }
-     
+        
             const tableContainer = document.createElement('div');
             tableContainer.className = 'table-container';
-     
+        
             const table = document.createElement('table');
             table.classList.add('results-table');
-     
+        
+            // Table header
             const headerRow = document.createElement('tr');
             headerRow.innerHTML = `
-                <th class="fixed-left">Comp No</th>
+                <th class="fixed-left">Sr No</th>
+                <th>Comp No</th>
                 <th>Victim Name</th>
-                <th>Victim Gender</th>
-                <th>Victim Mobile No</th>
                 <th>Ack No</th>
-                <th>Comp Date</th>
-                <th>Incident Date</th>
-                <th>Time</th>
-                <th>Category</th>
-                <th>Sub Category</th>
-                <th>Police Station</th>
-                <th>Investigation Officer</th>
-                <th>Lost Amt</th>
-                <th>Lien Amt</th>
-                <th>Victim Age</th>
-                <th>Victim Email</th>
-                <th>CCTNS No</th>
-                <th>FIR No</th>
-                <th>IT Act</th>
-                <th>BNS</th>
+                <th>Victim Mobile No</th>
                 <th>Action Taken</th>
                 <th>Forward Date</th>
                 <th>Out No</th>
+                <th>Comp Date</th>
+                <th>Lost Amt</th>
+                <th>Lien Amt</th>
+                <th>Sub Category</th>
+                <th>Police Station</th>
+                <th>Investigation Officer</th>
+                <th>FIR No</th>
+                <th>Incident Date</th>
+                <th>Time</th>
+                <th>Victim Gender</th>
+                <th>Victim Age</th>
+                <th>Victim Email</th>
+                <th>Category</th>
+                <th>CCTNS No</th>
+                <th>IT Act</th>
+                <th>BNS</th>
                 <th>Suspect Name</th>
                 <th>Suspect Gender</th>
                 <th>Suspect Age</th>
@@ -726,56 +840,70 @@ document.addEventListener('DOMContentLoaded', () => {
                 <th class="fixed-right">Action</th>
             `;
             table.appendChild(headerRow);
-     
-            results.forEach((result) => {
+        
+            // Table rows
+            results.forEach((result, index) => {
                 const resultRow = document.createElement('tr');
                 resultRow.innerHTML = `
-                    <td class="fixed-left">${result.id}</td>
-                    <td>${formatCellValue(result.victim_name)}</td>
-                    <td>${formatCellValue(result.victim_gender)}</td>
-                    <td>${formatCellValue(result.victim_mobile_numbers)}</td>
-                    <td>${formatCellValue(result.acknowledgment_no)}</td>
-                    <td>${formatCellValue(result.date_of_complaint)}</td>
-                    <td>${formatCellValue(result.date_of_incident)}</td>
-                    <td>${formatCellValue(result.time)}</td>
-                    <td>${formatCellValue(result.category_of_complaint)}</td>
-                    <td>${formatCellValue(result.sub_category_of_complaint)}</td>
-                    <td>${formatCellValue(result.police_station)}</td>
-                    <td>${formatCellValue(result.investigation_officer)}</td>
-                    <td>${formatCellValue(result.lost_amount)}</td>
-                    <td>${formatCellValue(result.lien_amount)}</td>
-                    <td>${formatCellValue(result.victim_age)}</td>
-                    <td>${formatCellValue(result.victim_email)}</td>
-                    <td>${formatCellValue(result.cctns_no)}</td>
-                    <td>${formatCellValue(result.fir_no)}</td>
-                    <td>${formatCellValue(result.it_act)}</td>
-                    <td>${formatCellValue(result.bns)}</td>
-                    <td>${formatCellValue(result.action_taken)}</td>
-                    <td>${formatCellValue(result.forward_date)}</td>
-                    <td>${formatCellValue(result.out_no)}</td>
-                    <td>${formatCellValue(result.suspect_name)}</td>
-                    <td>${formatCellValue(result.suspect_gender)}</td>
-                    <td>${formatCellValue(result.suspect_age)}</td>
-                    <td>${formatCellValue(result.suspect_email)}</td>
-                    <td>${formatCellValue(result.suspect_mobile_numbers)}</td>
-                    <td>${formatCellValue(result.suspect_social_handles)}</td>
-                    <td>${formatCellValue(result.suspect_acc_no)}</td>
-                    <td>${formatCellValue(result.ifsc_code)}</td>
-                    <td>${formatCellValue(result.suspect_address)}</td>
-                    <td>${formatCellValue(result.description)}</td>
-                    <td class="fixed-right">
-                    ${result.file_path ? `
-                        <button class="view-doc" data-id="${result.id}" data-file="${result.file_path}">
-                            <i class="fa fa-eye"></i> View
-     </button>
-                    ` : '<span class="no-file"></span>'}
+                    <td class="fixed-left">${index + 1}</td>
+                    <td>${formatCellValue(result.id)}</td>
+                    <td>${createEditableCell(formatCellValue(result.victim_name), 'victim_name',result.id)}</td>
+                    <td>${createEditableCell(formatCellValue(result.acknowledgment_no), 'acknowledgment_no',result.id)}</td>
+                    <td>${createEditableCell(formatCellValue(result.victim_mobile_numbers), 'victim_mobile_numbers',result.id)}</td>
+                    <td>${createEditableCell(formatCellValue(result.action_taken), 'action_taken', true, ['Forward To PS', 'Transferred To Other', 'Closed'],result.id)}</td>
+                    <td>${createEditableCell(formatCellValue(result.forward_date), 'forward_date',result.id)}</td>
+                    <td>${createEditableCell(formatCellValue(result.out_no), 'out_no',result.id)}</td>
+                    <td>${createEditableCell(formatCellValue(result.date_of_complaint), 'date_of_complaint',result.id)}</td>
+                    <td>${createEditableCell(formatCellValue(result.lost_amount), 'lost_amount',result.id)}</td>
+                    <td>${createEditableCell(formatCellValue(result.lien_amount), 'lien_amount',result.id)}</td>
+                    <td>${createEditableCell(formatCellValue(result.sub_category_of_complaint), 'sub_category_of_complaint', true, getSubcategories(result.category_of_complaint),result.id)}</td>
+                    <td>${createEditableCell(formatCellValue(result.police_station), 'police_station', true, [
+                        'Pimpri PS', 'Chinchwad PS', 'Nigdi PS', 'Bhosari PS', 'Bhosari MIDC PS',
+                        'Chakan PS', 'Alandi PS', 'Dighi PS', 'Sangvi PS', 'Wakad PS',
+                        'Hinjewadi PS', 'Dehuroad PS', 'Chikhali PS', 'Talegoan Dabhade PS',
+                        'Talegoan MIDC PS', 'Sant Tukaram Nagar PS', 'Dapodi PS', 'Kalewadi PS',
+                        'Bavdhan PS', 'Other'
+                    ],result.id)}</td>
+                    <td>${createEditableCell(formatCellValue(result.investigation_officer), 'investigation_officer', true, [
+                        'API Swami', 'API Munde', 'PSI Poman', 'PSI V. Patil', 'WPSI Vidya Patil', 'PSI Katkade', 'Other'
+                    ],result.id)}</td>
+                    <td>${createEditableCell(formatCellValue(result.fir_no), 'fir_no',result.id)}</td>
+                    <td>${createEditableCell(formatCellValue(result.date_of_incident), 'date_of_incident',result.id)}</td>
+                    <td>${createEditableCell(formatCellValue(result.time), 'time',result.id)}</td>
+                    <td>${createEditableCell(formatCellValue(result.victim_gender), 'victim_gender', true, ['Male', 'Female', 'Other'],result.id)}</td>
+                    <td>${createEditableCell(formatCellValue(result.victim_age), 'victim_age',result.id)}</td>
+                    <td>${createEditableCell(formatCellValue(result.victim_email), 'victim_email',result.id)}</td>
+                    <td>${createEditableCell(formatCellValue(result.category_of_complaint), 'category_of_complaint', true, [
+                        'Financial Fraud', 'Social Media Related', 'Other'
+                    ],result.id)}</td>
+                    <td>${createEditableCell(formatCellValue(result.cctns_no), 'cctns_no',result.id)}</td>
+                    <td>${createEditableCell(formatCellValue(result.it_act), 'it_act',result.id)}</td>
+                    <td>${createEditableCell(formatCellValue(result.bns), 'bns',result.id)}</td>
+                    <td>${createEditableCell(formatCellValue(result.suspect_name), 'suspect_name',result.id)}</td>
+                    <td>${createEditableCell(formatCellValue(result.suspect_gender), 'suspect_gender', true, ['Male', 'Female', 'Other'],result.id)}</td>
+                    <td>${createEditableCell(formatCellValue(result.suspect_age), 'suspect_age',result.id)}</td>
+                    <td>${createEditableCell(formatCellValue(result.suspect_email), 'suspect_email',result.id)}</td>
+                    <td>${createEditableCell(formatCellValue(result.suspect_mobile_numbers), 'suspect_mobile_numbers',result.id)}</td>
+                    <td>${createEditableCell(formatCellValue(result.suspect_social_handles), 'suspect_social_handles',result.id)}</td>
+                    <td>${createEditableCell(formatCellValue(result.suspect_acc_no), 'suspect_acc_no',result.id)}</td>
+                    <td>${createEditableCell(formatCellValue(result.ifsc_code), 'ifsc_code',result.id)}</td>
+                    <td>${createEditableCell(formatCellValue(result.suspect_address), 'suspect_address',result.id)}</td>
+                    <td>${createEditableCell(formatCellValue(result.description), 'description',result.id)}</td>
+                    <td class="fixed-right button-container">
+                        ${result.file_path ? `
+                            <button class="view-doc" data-id="${result.id}" data-file="${result.file_path}">
+                                <i class="fa fa-eye"></i>
+                            </button>
+                        ` : '<span class="no-file"></span>'}
+        
                         <button class="delete-case" data-id="${result.id}">
                             <i class="fa fa-trash"></i> 
                         </button>
                     </td>
                 `;
                 table.appendChild(resultRow);
-     
+        
+                // Double-click selection
                 resultRow.addEventListener('dblclick', () => {
                     if (selectedComplaints.has(result.id)) {
                         selectedComplaints.delete(result.id);
@@ -786,106 +914,231 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                     toggleMergeButton();
                 });
-     
+        
+                // View Document Button Event Listener
+                const viewButton = resultRow.querySelector('.view-doc');
+                if (viewButton) {
+                    viewButton.addEventListener('click', () => {
+                        const filePathString = viewButton.getAttribute('data-file');
+                        console.log(`Viewing documents: ${filePathString}`);
+        
+                        if (!filePathString) {
+                            Utils.showNotification('No file available');
+                            return;
+                        }
+        
+                        const filePaths = filePathString.split(',').map(file => file.trim());
+                        filePaths.forEach(filePath => {
+                            console.log(`Opening: ${filePath}`);
+                            window.open(`file://${filePath}`, '_blank');
+                        });
+                    });
+                }
+        
+                // Delete Case Button Event Listener
                 const deleteButton = resultRow.querySelector('.delete-case');
                 deleteButton.addEventListener('click', async () => {
                     const caseId = result.id;
                     Utils.showNotification(`Deleting case ${caseId}...`, 'warning');
-     
+        
                     try {
-                        const deleteResult = await window.electronAPI.deleteCase(caseId);
-                        if (deleteResult.success) {
-                            Utils.showNotification('Complaint deleted successfully!', 'success');
-                            resultRow.remove();
-     
-                            const deletedCaseData = result; // Store the deleted case data
-                            const filtersAtDeletion = { ...currentFilters }; // Capture filters at deletion
-                            const deleteAction = {
-                                async undo() {
-                                    const restoreResult = await window.electronAPI.createCase(deletedCaseData);
-                                    if (restoreResult.success) {
-                                        const newRow = createResultRow(deletedCaseData);
-                                        table.insertBefore(newRow, totalRow); // Insert before total row
-                                    }
-                                },
-                                async redo() {
-                                    await window.electronAPI.deleteCase(deletedCaseData.id);
-                                    const row = document.querySelector(`tr[data-id="${deletedCaseData.id}"]`);
-                                    if (row) row.remove();
-                                }
-                            };
-                            historyManager.push(deleteAction);
-                        } else {
-                            Utils.showNotification(deleteResult.message, 'error');
+                        const deleteResult = await handleDelete(caseId, resultRow);
+                        if (!deleteResult.success) {
+                            Utils.showNotification('Failed to delete complaint.', 'error');
+                            return;
                         }
+        
+                        resultRow.remove();
+                        Utils.showNotification('Case deleted successfully.', 'success');
                     } catch (error) {
                         console.error('Failed to delete complaint:', error);
                         Utils.showNotification('Failed to delete complaint.', 'error');
                     }
                 });
             });
-     
+        
+            // Add Total Row
             const totalRow = document.createElement('tr');
             totalRow.innerHTML = `
-                <td colspan="10" style="text-align: center; font-weight: bold;">
+                <td colspan="35" style="text-align: left; font-weight: bold; padding-left: 13%;">
                     Total Complaints: ${results.length}
                 </td>
             `;
             table.appendChild(totalRow);
-     
+        
             searchResults.appendChild(table);
             downloadButton.style.display = 'block';
         };
-     
-        const createResultRow = (result) => {
-            const resultRow = document.createElement('tr');
-            resultRow.innerHTML = `
-                <td class="fixed-left">${result.id}</td>
-                <td>${formatCellValue(result.victim_name)}</td>
-                <td>${formatCellValue(result.victim_gender)}</td>
-                <td>${formatCellValue(result.victim_mobile_numbers)}</td>
-                <td>${formatCellValue(result.acknowledgment_no)}</td>
-                <td>${formatCellValue(result.date_of_complaint)}</td>
-                <td>${formatCellValue(result.date_of_incident)}</td>
-                <td>${formatCellValue(result.time)}</td>
-                <td>${formatCellValue(result.category_of_complaint)}</td>
-                <td>${formatCellValue(result.sub_category_of_complaint)}</td>
-                <td>${formatCellValue(result.police_station)}</td>
-                <td>${formatCellValue(result.investigation_officer)}</td>
-                <td>${formatCellValue(result.lost_amount)}</td>
-                <td>${formatCellValue(result.lien_amount)}</td>
-                <td>${formatCellValue(result.victim_age)}</td>
-                <td>${formatCellValue(result.victim_email)}</td>
-                <td>${formatCellValue(result.cctns_no)}</td>
-                <td>${formatCellValue(result.fir_no)}</td>
-                <td>${formatCellValue(result.it_act)}</td>
-                <td>${formatCellValue(result.bns)}</td>
-                <td>${formatCellValue(result.action_taken)}</td>
-                <td>${formatCellValue(result.forward_date)}</td>
-                <td>${formatCellValue(result.out_no)}</td>
-                <td>${formatCellValue(result.suspect_name)}</td>
-                <td>${formatCellValue(result.suspect_gender)}</td>
-                <td>${formatCellValue(result.suspect_age)}</td>
-                <td>${formatCellValue(result.suspect_email)}</td>
-                <td>${formatCellValue(result.suspect_mobile_numbers)}</td>
-                <td>${formatCellValue(result.suspect_social_handles)}</td>
-                <td>${formatCellValue(result.suspect_acc_no)}</td>
-                <td>${formatCellValue(result.ifsc_code)}</td>
-                <td>${formatCellValue(result.suspect_address)}</td>
-                <td>${formatCellValue(result.description)}</td <td class="fixed-right">
-                    ${result.file_path ? `
-                        <button class="view-doc" data-id="${result.id}" data-file="${result.file_path}">
-                            <i class="fa fa-eye"></i> View
-                        </button>
-                    ` : '<span class="no-file"></span>'}
-                    <button class="delete-case" data-id="${result.id}">
-                        <i class="fa fa-trash"></i> 
-                    </button>
-                </td>
-            `;
-            return resultRow;
+        const createEditableCell = (value, fieldName, isDropdown = false, options = [], rowId) => {
+            const safeValue = value || '';
+            const displayContent = safeValue 
+                ? safeValue
+                    .replace(/<br\s*\/?>/gi, '__BR__PLACEHOLDER__')
+                    .replace(/</g, '&lt;')
+                    .replace(/>/g, '&gt;')
+                    .replace(/__BR__PLACEHOLDER__/g, '<br>')
+                : '<span class="placeholder">Click to edit</span>';
+        
+            if (isDropdown && options.length > 0) {
+                const optionsHTML = options.map(option =>
+                    `<option value="${option}" ${option === safeValue ? 'selected' : ''}>${option}</option>`
+                ).join('');
+        
+                return `
+                    <div class="editable-cell" data-id="${rowId || ''}" data-field="${fieldName}">
+                        <span class="cell-value">${displayContent}</span>
+                        <select class="cell-input" style="display: none;">
+                            <option value="">Select...</option>
+                            ${optionsHTML}
+                        </select>
+                    </div>
+                `;
+            } else {
+                const editableValue = safeValue.replace(/<br\s*\/?>/gi, '\n');
+                return `
+                    <div class="editable-cell" data-id="${rowId || ''}" data-field="${fieldName}">
+                        <span class="cell-value">${displayContent}</span>
+                        <textarea class="cell-input" style="display: none;" placeholder="Enter ${fieldName.replace(/_/g, ' ')}">${editableValue}</textarea>
+                    </div>
+                `;
+            }
         };
-     
+        
+        // ✅ Inline editing logic
+        searchResults.addEventListener("click", async (event) => {
+            const cell = event.target.closest(".editable-cell");
+            if (!cell || cell.querySelector(".edit-container")) return;
+        
+            const span = cell.querySelector(".cell-value");
+            const fieldName = cell.dataset.field;
+            const existingSelect = cell.querySelector("select.cell-input");
+            const isDropdown = !!existingSelect;
+            const dropdownOptions = existingSelect
+                ? Array.from(existingSelect.options).map(opt => opt.value).filter(v => v !== "")
+                : null;
+        
+            let editContainer = document.createElement("div");
+            editContainer.classList.add("edit-container");
+            const originalValue = span.innerHTML;
+        
+            const confirmAndSave = async (newValue) => {
+                const confirmed = await window.electronAPI.confirmUpdate();
+                if (!confirmed) {
+                    span.style.display = "block";
+                    if (cell.contains(editContainer)) cell.removeChild(editContainer);
+                    return;
+                }
+        
+                span.innerHTML = newValue;
+                span.style.display = "block";
+                if (cell.contains(editContainer)) cell.removeChild(editContainer);
+        
+                await window.electronAPI.updateCell(cell.dataset.id, {
+                    [fieldName]: newValue
+                });
+            };
+        
+            const cancel = () => {
+                span.style.display = "block";
+                if (cell.contains(editContainer)) cell.removeChild(editContainer);
+            };
+        
+            if (isDropdown && span.innerHTML.includes("<br>")) {
+                const values = span.innerHTML.split("<br>").map(v => v.trim());
+                const selects = [];
+        
+                values.forEach(val => {
+                    const select = document.createElement("select");
+                    select.classList.add("cell-select");
+        
+                    dropdownOptions.forEach(optionValue => {
+                        const option = document.createElement("option");
+                        option.value = optionValue;
+                        option.textContent = optionValue;
+                        if (val === optionValue) option.selected = true;
+                        select.appendChild(option);
+                    });
+        
+                    editContainer.appendChild(select);
+                    selects.push(select);
+                });
+        
+                cell.appendChild(editContainer);
+                selects[0].focus();
+        
+                editContainer.addEventListener("keydown", (e) => {
+                    if (e.key === "Enter") {
+                        const updated = selects.map(s => s.value.trim()).filter(v => v !== "");
+                        confirmAndSave(updated.join("<br>"));
+                    }
+                });
+        
+                editContainer.addEventListener("focusout", (e) => {
+                    if (!editContainer.contains(e.relatedTarget)) cancel();
+                });
+        
+            } else if (isDropdown) {
+                const select = document.createElement("select");
+                select.classList.add("cell-select");
+        
+                dropdownOptions.forEach(optionValue => {
+                    const option = document.createElement("option");
+                    option.value = optionValue;
+                    option.textContent = optionValue;
+                    if (span.textContent.trim() === optionValue) option.selected = true;
+                    select.appendChild(option);
+                });
+        
+                editContainer.appendChild(select);
+                cell.appendChild(editContainer);
+                select.focus();
+        
+                select.addEventListener("keydown", (e) => {
+                    if (e.key === "Enter") {
+                        const updatedValue = select.value.trim();
+                        confirmAndSave(updatedValue);
+                    }
+                });
+        
+                select.addEventListener("blur", (e) => {
+                    setTimeout(() => {
+                        if (!editContainer.contains(document.activeElement)) cancel();
+                    }, 50);
+                });
+        
+            } else {
+                const values = span.innerHTML.includes("<br>")
+                    ? span.innerHTML.split("<br>").map(v => v.trim())
+                    : [span.textContent.trim()];
+        
+                const inputs = values.map(val => {
+                    const input = document.createElement("input");
+                    input.type = "text";
+                    input.classList.add("cell-input");
+                    input.value = val;
+                    return input;
+                });
+        
+                inputs.forEach(input => editContainer.appendChild(input));
+                cell.appendChild(editContainer);
+                inputs[0].focus();
+        
+                editContainer.addEventListener("keydown", (e) => {
+                    if (e.key === "Enter") {
+                        e.preventDefault();
+                        const updated = inputs.map(input => input.value.trim()).filter(v => v !== "");
+                        confirmAndSave(updated.join("<br>"));
+                    }
+                });
+        
+                editContainer.addEventListener("focusout", (e) => {
+                    if (!editContainer.contains(e.relatedTarget)) cancel();
+                });
+            }
+        
+            span.style.display = "none";
+        });        
+        
         const toggleMergeButton = () => {
             if (selectedComplaints.size > 1) {
                 mergeSection.style.display = 'block';
@@ -899,33 +1152,26 @@ document.addEventListener('DOMContentLoaded', () => {
                 Utils.showNotification('Please select at least two complaints to merge.', 'warning');
                 return;
             }
-     
+        
             const complaintIds = Array.from(selectedComplaints);
-            try {
-                const mergeResult = await window.electronAPI.mergeComplaints(complaintIds);
-                if (mergeResult.success) {
-                    Utils.showNotification('Complaints merged successfully!', 'success');
-                    selectedComplaints.clear();
-                    toggleMergeButton();
-                    const mergeAction = {
-                        async undo() {
-                            await window.electronAPI.unmergeComplaints(mergeResult.mergedCaseId);
-                            await performSearch(currentFilters);
-                        },
-                        async redo() {
-                            await window.electronAPI.mergeComplaints(complaintIds);
-                            await performSearch(currentFilters);
-                        }
-                    };
-                    historyManager.push(mergeAction);
-                } else {
-                    Utils.showNotification(mergeResult.message, 'error');
+            await handleMerge(complaintIds);  // Call handleMerge() here
+        });
+        
+        // Keyboard shortcut for merging complaints (Ctrl + M)
+        document.addEventListener('keydown', async (event) => {
+            if (event.ctrlKey && event.key.toLowerCase() === 'm') {
+                event.preventDefault(); // Prevent default browser behavior (e.g., opening menu)
+        
+                if (selectedComplaints.size < 2) {
+                    Utils.showNotification('Please select at least two complaints to merge.', 'warning');
+                    return;
                 }
-            } catch (error) {
-                console.error('Error merging complaints:', error);
-                Utils.showNotification('Failed to merge complaints.', 'error');
+        
+                const complaintIds = Array.from(selectedComplaints);
+                await handleMerge(complaintIds);  // Call handleMerge() here
             }
         });
+        
      
         downloadButton.addEventListener('click', () => {
             const isDropdownVisible = window.getComputedStyle(downloadOptions).display === 'block';
@@ -952,316 +1198,163 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         });
      
-        // Undo and Redo functionality
-        document.getElementById('undo-btn').addEventListener('click', () => historyManager.undo());
-        document.getElementById('redo-btn').addEventListener('click', () => historyManager.redo());
-     
+        // Undo functionality
+        document.getElementById('undo-btn').addEventListener('click', async() => await historyManager.undo());
+
         document.addEventListener('keydown', (e) => {
             if (e.ctrlKey && e.key === 'z') {
                 historyManager.undo();
-            } else if (e.ctrlKey && e.key === 'y') {
-                historyManager.redo();
             }
         });
      };
     
-    const setupEditPage = () => {
+     const setupEditPage = () => {
         const editForm = document.getElementById('edit-complaint-form');
         const searchButton = document.getElementById('search-complaint-btn');
         const complaintDetails = document.getElementById('complaint-details');
-        const currentFilePreview = document.getElementById('current-file-preview');
-        const newFile = document.getElementById('new-file');
-        const filePreview = document.getElementById('file-preview');
-    
-        handleOtherOption('police-station', 'Enter police station name');
-        handleOtherOption('investigation-officer', 'Enter officer name');
-        handleOtherOption('cat-of-complaint', 'Enter category of complaint');
-        handleOtherOption('sub-cat-of-complaint', 'Enter subcategory of complaint');
-    
-        // Update subcategories based on category selection
-        const categorySelect = document.getElementById('cat-of-complaint');
-        if (categorySelect) {
-            categorySelect.addEventListener('change', updateSubcategories);
-            updateSubcategories(); // Initial call to populate subcategories
-        }
-    
-        // Toggle visibility of Date of Forward and Outward No. fields based on Action Taken
-        const actionSelect = document.getElementById('action');
-        const forwardDateGroup = document.getElementById('forward-date-group');
-        const outNoGroup = document.getElementById('out-no-group');
-    
-        const toggleFieldsBasedOnAction = (actionValue) => {
-            const isForwardToPS = actionValue === 'Forward To PS';
-            forwardDateGroup.style.display = isForwardToPS ? 'block' : 'none';
-            outNoGroup.style.display = isForwardToPS ? 'block' : 'none';
-        };
-    
-        if (actionSelect) {
-            actionSelect.addEventListener('change', () => toggleFieldsBasedOnAction(actionSelect.value));
-        }
-    
-        // Check if searchButton exists
-        if (!searchButton) {
-            console.error("Search button not found. Please check the HTML for the element with ID 'search-complaint-btn'.");
-            return; // Exit the function if the button is not found
-        }
+        const tabsContainer = document.getElementById('tabs');
+        let complaintsData = [];
+        let activeTabIndex = 0;
     
         // Handle search functionality
         const performSearch = async () => {
             const complaintId = document.getElementById('complaint-search').value.trim();
-        try {
-            const complaints = await window.electronAPI.fetchComplaints({ id: complaintId });
-            const complaint = complaints.find(c => c.id === parseInt(complaintId));
-
-    
-                if (complaint) {
+            try {
+                const complaints = await window.electronAPI.fetchComplaints({ id: complaintId });
+                if (complaints.length > 0) {
+                    createTabs(complaints);
+                    loadComplaintData(complaints[0]);
                     complaintDetails.style.display = 'block';
-                    populateComplaintDetails(complaint);
                 } else {
-                    Utils.showNotification('Complaint not found.', 'error');
+                    complaintDetails.style.display = 'none';
                 }
+                complaintsData = complaints;
             } catch (error) {
                 console.error('Error fetching complaint:', error);
                 Utils.showNotification('Error fetching complaint.', 'error');
             }
         };
     
-        // Populate the form with fetched complaint data
-        const populateComplaintDetails = (complaint) => {
-            console.log("Fetched data:", JSON.stringify(complaint, null, 2));
-
+        function createTabs(complaints) {
+            tabsContainer.innerHTML = '';
+            complaints.forEach((complaint, index) => {
+                const tab = document.createElement('div');
+                tab.className = `tab ${index === 0 ? 'active' : ''}`;
+                tab.textContent = `Complaint ${complaint.complaintNumber}`;
+                tab.dataset.index = index;
+    
+                tab.addEventListener('click', () => {
+                    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                    tab.classList.add('active');
+                    activeTabIndex = index;
+                    loadComplaintData(complaints[index]);
+                });
+    
+                tabsContainer.appendChild(tab);
+            });
+    
+            document.getElementById('tab-container').style.display = 'block';
+        }
+    
+        function loadComplaintData(complaint) {
             const fields = [
-                { id: 'ack-no', value: complaint.acknowledgment_no },
-                { id: 'lost-amt', value: complaint.lost_amount },
-                { id: 'lien-amt', value: complaint.lien_amount },
-                { id: 'cat-of-complaint', value: complaint.category_of_complaint },
-                { id: 'victim-mobile-numbers', value: complaint.victim_mobile_numbers },
-                { id: 'social-handles', value: complaint.suspect_social_handles },
-                { id: 'sub-cat-of-complaint', value: complaint.sub_category_of_complaint },
-                { id: 'action', value: complaint.action_taken },
+                { id: 'victim-name', value: complaint.victimName },
+                { id: 'victim-gender', value: complaint.victimGender },
+                { id: 'victim-age', value: complaint.victimAge },
+                { id: 'victim-email', value: complaint.victimEmail },
+                { id: 'victim-mobile-numbers', value: complaint.victimMobileNumber },
+                { id: 'ack-no', value: complaint.ackNo },
+                { id: 'cctns-no', value: complaint.cctnsNo },
+                { id: 'fir-no', value: complaint.firNo },
+                { id: 'date-of-complaint', value: complaint.dateOfComplaint },
+                { id: 'date-of-incident', value: complaint.dateOfIncident },
+                { id: 'time', value: complaint.time },
+                { id: 'am-pm', value: complaint.amPm },
+                { id: 'cat-of-complaint', value: complaint.category },
+                { id: 'sub-cat-of-complaint', value: complaint.subCategory },
+                { id: 'police-station', value: complaint.policeStation },
+                { id: 'investigation-officer', value: complaint.investigationOfficer },
+                { id: 'lost-amt', value: complaint.lostAmount },
+                { id: 'lien-amt', value: complaint.lienAmount },
+                { id: 'it-act', value: complaint.itActSection },
+                { id: 'bns', value: complaint.bnsSection },
+                { id: 'action', value: complaint.actionTaken },
+                { id: 'forward-date', value: complaint.forwardDate },
+                { id: 'out-no', value: complaint.outwardNo },
+                { id: 'suspect-name', value: complaint.suspectName },
+                { id: 'suspect-gender', value: complaint.suspectGender },
+                { id: 'suspect-age', value: complaint.suspectAge },
+                { id: 'suspect-email', value: complaint.suspectEmail },
+                { id: 'mobile-numbers', value: complaint.suspectMobileNumber },
+                { id: 'social-handles', value: complaint.socialMediaHandles },
+                { id: 'acc-no', value: complaint.bankAccNo },
+                { id: 'ifsc-code', value: complaint.ifscCode },
+                { id: 'suspect_address', value: complaint.suspectAddress },
+                { id: 'description', value: complaint.description }
             ];
     
             fields.forEach(field => {
-        const element = document.getElementById(field.id);
-
-        if (element) {
-            if (element.tagName === "SELECT") {
-                const options = element.getElementsByTagName("option");
-                let optionFound = false;
-
-                // Check if the value matches any option in the select dropdown
-                for (let option of options) {
-                    if (option.value === field.value) {
-                        option.selected = true;
-                        optionFound = true;
-                        break;
-                    }
-                }
-
-                // If it's the 'category' select element, trigger subcategory population
-                if (field.id === 'cat-of-complaint' && field.value) {
-                    element.value = field.value; // Set category value
-                    updateSubcategories();  // Call this to populate the subcategories
-
-                    // Set the subcategory if it matches
-                    const subcategorySelect = document.getElementById('sub-cat-of-complaint');
-                    const customSubcategory = document.getElementById('custom-sub-cat');
-
-                    if (field.value === 'other') {
-                        customSubcategory.style.display = 'block';
-                        customSubcategory.value = complaint.sub_category_of_complaint; // Set custom subcategory value
-                    } else {
-                        subcategorySelect.value = complaint.sub_category_of_complaint; // Set subcategory from dropdown
-                    }
-                }
-            }
-            // Handle other field types (input, textarea, etc.)
-            else if (field.id === 'custom-sub-cat') {
-                // Handle custom subcategory field separately
-                element.value = complaint.sub_category_of_complaint;
-            } else {
-                element.value = field.value; // For other fields
-            }
-        }
-    });
-
-    // Handle case when category is 'other' and show custom sub-category input
-    if (complaint.category_of_complaint === 'other' || !complaint.category_of_complaint) {
-        const customSubCategory = document.getElementById('custom-sub-cat');
-        if (customSubCategory) {
-            customSubCategory.style.display = 'block';
-            customSubCategory.value = complaint.sub_category_of_complaint || ""; // Set custom sub-category value
-        }
-    }
-    
-            const additionalFields = [
-                'victim-name', 'victim-gender', 'victim-age', 'victim-email', 'cctns-no', 'fir-no', 
-                'date-of-complaint', 'date-of-incident', 'am-pm', 'police-station', 'investigation-officer', 
-                'it-act', 'bns', 'forward-date', 'out-no', 'suspect-name', 'suspect-gender', 
-                'suspect-age', 'suspect-email', 'suspect_address', 'description'
-            ];
-    
-            additionalFields.forEach(field => {
-                const element = document.getElementById(field);
-                if (element && complaint[field.replace(/-/g, '_')] !== undefined) {
-                    element.value = complaint[field.replace(/-/g, '_')] || '';
+                const element = document.getElementById(field.id);
+                if (element) {
+                    element.value = field.value || '';
                 }
             });
+        }
     
-            // Handle file preview if file exists
-            if (complaint.file_path) {
-                const viewFileButton = createFileButton('view-doc', 'View', complaint.file_path);
-    
-                currentFilePreview.innerHTML = ''; // Clear any previous content
-                currentFilePreview.appendChild(viewFileButton);
-            }
-    
-            toggleFieldsBasedOnAction(complaint.action_taken);
-            populateDynamicFields('victim-mobile-numbers', JSON.parse(complaint.victim_mobile_numbers || '[]'));
-            populateDynamicFields('mobile-numbers', JSON.parse(complaint.suspect_mobile_numbers || '[]'));
-            populateDynamicFields('social-handles', JSON.parse(complaint.suspect_social_handles || '[]'));
-            populateDynamicFields('acc-no', JSON.parse(complaint.suspect_acc_no || '[]'));
-            populateDynamicFields('ifsc-code', JSON.parse(complaint.ifsc_code || '[]'));
-        };
-
-        document.getElementById('cancel-btn').addEventListener('click', () => {
-            Utils.resetForm(editForm);
-            complaintDetails.style.display = 'none';
-        });
-
-        const populateDynamicFields = (containerId, values) => {
-            console.log(`Populating dynamic fields for container: ${containerId}`);
-            const container = document.getElementById(containerId);
-            if (!container) {
-                console.error(`Container with id '${containerId}' not found.`);
-                return;
-            }
-    
-            // Ensure values is an array
-            if (!Array.isArray(values)) {
-                try {
-                    values = JSON.parse(values || '[]'); // Parse only if it's not an array
-                } catch (error) {
-                    console.error(`Failed to parse values for ${containerId}:`, error);
-                    values = []; // Default to an empty array if parsing fails
-                }
-            }
-    
-            container.innerHTML = ''; // Clear previous values
-    
-            values.forEach(value => {
-                const input = document.createElement('input');
-                input.type = 'text';
-                input.className = 'dynamic-input';
-                input.value = value;
-                container.appendChild(input);
-            });
-        };
-    
-        // Event Listener for the Search Button
         searchButton.addEventListener('click', performSearch);
-    
-        // Handle the Enter key press in the complaint number input
         document.getElementById('complaint-search').addEventListener('keydown', (event) => {
             if (event.key === 'Enter') {
-                event.preventDefault(); // Prevent form submission
-                performSearch(); // Call the search function
+                event.preventDefault();
+                performSearch();
             }
         });
     
-        // Handle form submission for complaint update
         editForm.addEventListener('submit', async (e) => {
             e.preventDefault();
-            const complaintNumber = document.getElementById('complaint-search').value.trim();
-            const updateData = {
-                victimName: document.getElementById('victim-name').value.trim() || null,
-                victimGender: document.getElementById('victim-gender').value.trim() || null,
-                victimAge: document.getElementById('victim-age').value.trim() || null,
-                victimEmail: document.getElementById('victim-email').value.trim() || null,
-                victimMobileNumbers: JSON.stringify(Array.from(document.querySelectorAll('#victim-mobile-numbers input.dynamic-input')).map(input => input.value).filter(value => value.trim() !== '')),
-                acknowledgmentNo: document.getElementById('ack-no').value.trim() || null,
-                cctnsNo: document.getElementById('cctns-no').value.trim() || null,
-                firNo: document.getElementById('fir-no').value.trim() || null,
-                dateOfComplaint: document.getElementById('date-of-complaint').value.trim() || null,
-                dateOfIncident: document.getElementById('date-of-incident').value.trim() || null,
-                time: document.getElementById('time').value.trim() || null,
-                amPm: document.getElementById('am-pm').value.trim() || null,
-                categoryOfComplaint: document.getElementById('cat-of-complaint').value.trim() || null,
-                subCategoryOfComplaint: document.getElementById('sub-cat-of-complaint').value.trim() || null,
-                policeStation: document.getElementById('police-station').value.trim() || null,
-                investigationOfficer: document.getElementById('investigation-officer').value.trim() || null,
-                lostAmount: document.getElementById('lost-amt').value.trim() || null,
-                lienAmount: document.getElementById('lien-amt').value.trim() || null,
-                itAct: document.getElementById('it-act').value.trim() || null,
-                bns: document.getElementById('bns').value.trim() || null,
-                actionTaken: document.getElementById('action').value.trim() || null,
-                forwardDate: document.getElementById('forward-date').value.trim() || null,
-                outNo: document.getElementById('out-no').value.trim() || null,
-                suspectName: document.getElementById('suspect-name').value.trim() || null,
-                suspectGender: document.getElementById('suspect-gender').value.trim() || null,
-                suspectAge: document.getElementById('suspect-age').value.trim() || null,
-                suspectEmail: document.getElementById('suspect-email').value.trim() || null,
-                suspectMobileNumbers: JSON.stringify(Array.from(document.querySelectorAll('#mobile-numbers input.dynamic-input')).map(input => input.value.trim()).filter(value => value.trim() !== '')),
-                suspectSocialHandles: JSON.stringify(Array.from(document.querySelectorAll('#social-handles input.dynamic-input')).map(input => input.value.trim()).filter(value => value.trim() !== '')),
-                suspectAccNo: JSON.stringify(Array.from(document.querySelectorAll('#acc-no input.dynamic-input')).map(input => input.value.trim()).filter(value => value.trim() !== '')),
-                ifscCode: JSON.stringify(Array.from(document.querySelectorAll('#ifsc-code input.dynamic-input')).map(input => input.value.trim()).filter(value => value.trim() !== '')),
-                suspectAddress: document.getElementById('suspect_address').value.trim() || null,
-                description: document.getElementById('description').value.trim() || null,
-                fileContent: await getFileContent(newFile.files[0]), // Get file content
-                fileName: newFile.files[0]?.name || null,
-                filePath: newFile.files[0]?.path || null,
-            };
-      
-            try {
-                console.log("Update Data: ", JSON.stringify(updateData, null, 2)); // Log entire data
-
-                const result = await window.electronAPI.updateComplaint(complaintNumber, updateData);
-                if (result.success) {
-                    Utils.showNotification('Complaint updated successfully!', 'success');
-                    setTimeout(() => Utils.redirectTo('dashboard.html'), 300);
-
-                } else {
-                    Utils.showNotification(result.message, 'error');
-                }
-            } catch (error) {
-                Utils.showNotification('Failed to update complaint.', 'error');
-            }
+            const currentComplaint = complaintsData[activeTabIndex];
+            // Update currentComplaint properties with form values
+            currentComplaint.victimName = document.getElementById('victim-name').value;
+            currentComplaint.victimGender = document.getElementById('victim-gender').value;
+            currentComplaint.victimAge = document.getElementById('victim-age').value;
+            currentComplaint.victimEmail = document.getElementById('victim-email').value;
+            currentComplaint.victimMobileNumber = document.getElementById('victim-mobile-numbers').querySelector('.mobile-input').value;
+            currentComplaint.ackNo = document.getElementById('ack-no').value;
+            currentComplaint.cctnsNo = document.getElementById('cctns-no').value;
+            currentComplaint.firNo = document.getElementById('fir-no').value;
+            currentComplaint.dateOfComplaint = document.getElementById('date-of-complaint').value;
+            currentComplaint.dateOfIncident = document.getElementById('date-of-incident').value;
+            currentComplaint.time = document.getElementById('time').value;
+            currentComplaint.amPm = document.getElementById('am-pm').value;
+            currentComplaint.category = document.getElementById('cat-of-complaint').value;
+            currentComplaint.subCategory = document.getElementById('sub-cat-of-complaint').value;
+            currentComplaint.policeStation = document.getElementById('police-station').value;
+            currentComplaint.investigationOfficer = document.getElementById('investigation-officer').value;
+            currentComplaint.lostAmount = document.getElementById('lost-amt').value;
+            currentComplaint.lienAmount = document.getElementById('lien-amt').value;
+            currentComplaint.itActSection = document.getElementById('it-act').value;
+            currentComplaint.bnsSection = document.getElementById('bns').value;
+            currentComplaint.actionTaken = document.getElementById('action').value;
+            currentComplaint.forwardDate = document.getElementById('forward-date').value;
+            currentComplaint.outwardNo = document.getElementById('out-no').value;
+            currentComplaint.suspectName = document.getElementById('suspect-name').value;
+            currentComplaint.suspectGender = document.getElementById('suspect-gender').value;
+            currentComplaint.suspectAge = document.getElementById('suspect-age').value;
+            currentComplaint.suspectEmail = document.getElementById('suspect-email').value;
+            currentComplaint.suspectMobileNumber = document.getElementById('mobile-numbers').querySelector('.mobile-input').value;
+            currentComplaint.socialMediaHandles = document.getElementById('social-handles').querySelector('.handle-input').value;
+            currentComplaint.bankAccNo = document.getElementById('acc-no').querySelector('.acc-input').value;
+            currentComplaint.ifscCode = document.getElementById('ifsc-code').querySelector('.ifsc-input').value;
+            currentComplaint.suspectAddress = document.getElementById('suspect_address').value;
+            currentComplaint.description = document.getElementById('description').value;
+    
+            console.log('Updated data:', currentComplaint);
         });
     
-        // Handle file input change event to create "View" and "Delete" buttons for the new file
-        newFile.addEventListener('change', (e) => {
-            const file = e.target.files[0];
-            if (file) {
-                // Clear any previous file preview content
-                filePreview.innerHTML = '';
-    
-                // Create "View" and "Delete" buttons for the new file
-                const viewFileButton = createFileButton('view-doc', 'View', file.path);
-                const deleteFileButton = createFileButton('delete-case', 'Delete', file.path, () => {
-                    filePreview.innerHTML = ''; // Clear preview area
-                    newFile.value = ''; // Reset the file input
-                    Utils.showNotification('File deleted successfully!', 'success');
-                });
-    
-                // Append the buttons to the file preview area
-                filePreview.appendChild(viewFileButton);
-                filePreview.appendChild(deleteFileButton);
-            }
+        document.getElementById('cancel-btn').addEventListener('click', () => {
+            editForm.reset();
+            complaintDetails.style.display = 'none';
+            tabsContainer.style.display = 'none';
         });
-    
-        // Function to get the file content as a buffer
-        const getFileContent = (file) => {
-            return new Promise((resolve, reject) => {
-                const reader = new FileReader();
-                reader.onload = () => resolve(reader.result);
-                reader.onerror = (error) => reject(error);
-                if (file) {
-                    reader.readAsArrayBuffer(file);
-                } else {
-                    resolve(null);
-                }
-            });
-        };
     };
     
     // Initialize the Edit Page setup after the DOM is fully loaded
