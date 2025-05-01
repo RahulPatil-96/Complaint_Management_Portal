@@ -5,6 +5,8 @@ const DatabaseManager = require('./backend');
 const{stringify} = require('querystring');
 const { dialog } = require('electron');
 
+
+
 class ElectronApp {
     constructor() {
         this.setupLogging();
@@ -103,14 +105,30 @@ class ElectronApp {
         });
 
         this.mainWindow.setMenuBarVisibility(false);
-        this.mainWindow.on('closed', () => {
-            this.mainWindow = null;
+        this.mainWindow.on('close', async (e) => {
+            if (this.checkpointInProgress) return;
+            this.checkpointInProgress = true;
+        
+            e.preventDefault(); // prevent closing for now
+        
+            console.log('[INFO] Window close detected. Running WAL checkpoint...');
+        
+            try {
+                await this.dbManager.checkpointAndClose();
+                console.log('[INFO] WAL checkpoint completed. Closing now...');
+            } catch (err) {
+                console.error("[ERROR] Checkpoint process failed:", err.message);
+            }
+        
+            this.mainWindow.destroy();
+            app.quit();
         });
+        
     }
 
     // Backup functionality
     setupBackupScheduler() {
-        const BACKUP_INTERVAL = 3 * 24 * 60 * 60 * 1000;
+        const BACKUP_INTERVAL = 24 * 60 * 60 * 1000;
         const BACKUP_DIR = 'D:\\complaint-backup';
         const LAST_BACKUP_FILE = path.join(app.getPath('userData'), 'last-backup-time.json');
     
@@ -195,7 +213,7 @@ class ElectronApp {
             if (now - lastBackupTime >= BACKUP_INTERVAL) {
                 createBackup();
             }
-        },  3 * 24 * 60 * 60 * 1000); // Check every hour
+        }, 24 * 60 * 60 * 1000); // Check every hour
     }
 
     // Set up IPC handlers to communicate with renderer process
@@ -209,11 +227,20 @@ class ElectronApp {
             }
         });
 
-        ipcMain.handle('navigateToFile', (_, filePath) => {
+        ipcMain.handle('navigateToFile', (_, filePath, queryParams) => {
             try {
                 const absolutePath = path.join(__dirname, 'templates', filePath);
+                const url = new URL(`file://${absolutePath}`);
+                
+                // If there are query parameters, append them to the URL
+                if (queryParams) {
+                    Object.keys(queryParams).forEach(key => {
+                        url.searchParams.append(key, queryParams[key]);
+                    });
+                }
+        
                 if (this.mainWindow) {
-                    this.mainWindow.loadFile(absolutePath);
+                    this.mainWindow.loadURL(url.toString());
                 }
                 return { success: true };
             } catch (error) {
@@ -247,6 +274,39 @@ class ElectronApp {
             } catch (error) {
                 console.error('Error fetching complaints:', error);
                 throw error;
+            }
+        });
+      
+        ipcMain.handle('confirm-update', async () => {
+            const response = await dialog.showMessageBox({
+                type: 'warning',
+                buttons: ['Cancel', 'Update'],
+                defaultId: 1,
+                title: 'Confirm Update',
+                message: 'Are you sure you want to update this cell?',
+            });
+            return response.response === 1; // true = confirm, false = cancel
+        });
+
+        ipcMain.handle('update-cell', async (_, rowId, updatedValue) => {
+            try {
+                console.log("Update request received:", "Row ID:", rowId, "Updated Value:", updatedValue);
+        
+                if (!this.dbManager) throw new Error("DatabaseManager is not initialized.");
+                if (!rowId) throw new Error("Missing rowId. Cannot update.");
+        
+                const field = Object.keys(updatedValue)[0];
+                const value = Object.values(updatedValue)[0];
+        
+                console.log("🔍 Extracted Field:", field, "Value:", value);
+        
+                const result = await this.dbManager.updateCell(rowId, field, value);
+        
+                console.log("Update result:", result);
+                return result;
+            } catch (error) {
+                console.error("Update error:", error);
+                return { success: false, error: error.message };
             }
         });
 
@@ -290,11 +350,12 @@ class ElectronApp {
 
         ipcMain.handle('mergeComplaints', async (_, complaintIds) => {
             try {
+                console.log('Merging complaints:', complaintIds);
                 return await this.dbManager.mergeComplaints(complaintIds);
+               
             } catch (error) {
                 console.error('Error during merging complaints:', error);
-                return { success: false, message: 'Merge failed. Please try again.' };
-            }
+                return { success: false, message: `Merge failed: ${error.message}` };            }
         });
 
         ipcMain.handle('deleteMergedComplaint', async (_, mergedId) => {
@@ -306,15 +367,19 @@ class ElectronApp {
               return { success: false, message: 'Failed to delete merged complaint' };
             }
           });
-
-        ipcMain.handle('updateComplaint', async (_, complaintNumber, updateData) => {
+        
+          ipcMain.handle('unmerge-complaints', async (event, mergedCaseId) => {
             try {
-                const result = await this.dbManager.updateDocument(complaintNumber, updateData);
+                console.log("Received unmerge request for:", mergedCaseId);
+        
+                
+                const result = await this.dbManager.unmergeComplaint(mergedCaseId);
+        
+                console.log("Unmerge result from db:", result);
                 return result;
             } catch (error) {
-                console.error('Error updating complaint:', JSON.stringify(error, null, 2));
-
-                return { success: false, message: 'Complaint update failed.' };
+                console.error("Unmerge error:", error.message);
+                return { success: false, message: error.message };
             }
         });
 
